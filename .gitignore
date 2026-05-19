@@ -1,0 +1,26 @@
+# Editor / OS cruft
+.DS_Store
+*.swp
+*~
+.vscode/
+.idea/
+
+# Test scratch
+tests/_scratch/
+.bats_tmp/
+
+# Local dev caches
+__pycache__/
+*.pyc
+
+# Secrets / local env
+.env
+.env.*
+*.pem
+*.key
+
+# Claude Code local overrides
+.claude/settings.local.json
+
+# Local design/planning docs (not for public repo)
+docs/

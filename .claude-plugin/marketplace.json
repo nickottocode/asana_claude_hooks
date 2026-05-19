@@ -1,0 +1,14 @@
+{
+  "name": "asana-plugin",
+  "owner": {
+    "name": "Nick Otto"
+  },
+  "description": "Single-plugin marketplace for the asana auto-update plugin.",
+  "plugins": [
+    {
+      "name": "asana",
+      "source": "./",
+      "description": "Auto-post progress to a linked Asana task on a per-project cooldown."
+    }
+  ]
+}

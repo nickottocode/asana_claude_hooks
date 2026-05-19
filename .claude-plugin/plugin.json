@@ -1,0 +1,13 @@
+{
+  "name": "asana",
+  "displayName": "Asana",
+  "version": "0.1.0",
+  "description": "Auto-post progress to a linked Asana task on a per-project cooldown.",
+  "author": {
+    "name": "Nick Otto"
+  },
+  "homepage": "https://github.com/nickottocode/asana_claude_hooks",
+  "repository": "https://github.com/nickottocode/asana_claude_hooks",
+  "license": "MIT",
+  "keywords": ["asana", "productivity", "hooks", "automation", "project-tracking"]
+}
