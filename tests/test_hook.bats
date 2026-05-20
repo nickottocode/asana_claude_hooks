@@ -21,6 +21,11 @@ run_hook_in() {
   (cd "$1" && printf '{}' | "$PLUGIN_DIR/hooks/stop-asana-check.sh")
 }
 
+run_hook_in_with_stdin() {
+  # Drive the hook with a caller-supplied stdin payload.
+  (cd "$1" && printf '%s' "$2" | "$PLUGIN_DIR/hooks/stop-asana-check.sh")
+}
+
 @test "hook is silent when cwd has no registered ancestor" {
   result="$(run_hook_in "/tmp")"
   [ -z "$result" ]
@@ -32,10 +37,10 @@ run_hook_in() {
   [ -z "$result" ]
 }
 
-@test "hook fires (prints additionalContext) when no state file exists" {
+@test "hook fires (emits decision:block with reason) when no state file exists" {
   result="$(run_hook_in "$PROJ")"
-  echo "$result" | jq -e '.hookSpecificOutput.hookEventName == "Stop"' >/dev/null
-  echo "$result" | jq -e '.hookSpecificOutput.additionalContext | test("asana:update")' >/dev/null
+  echo "$result" | jq -e '.decision == "block"' >/dev/null
+  echo "$result" | jq -e '.reason | test("asana:update")' >/dev/null
 }
 
 @test "hook is silent when cooldown has not elapsed" {
@@ -54,7 +59,8 @@ run_hook_in() {
   . "$PLUGIN_DIR/lib/state.sh"
   state_write "$STATE_DIR" "$PROJ" "2" "2020-01-01T00:00:00Z" "story"
   result="$(run_hook_in "$PROJ")"
-  echo "$result" | jq -e '.hookSpecificOutput.additionalContext | test("asana:update")' >/dev/null
+  echo "$result" | jq -e '.decision == "block"' >/dev/null
+  echo "$result" | jq -e '.reason | test("asana:update")' >/dev/null
 }
 
 @test "hook respects per-project cooldown override" {
@@ -84,6 +90,13 @@ EOF
   [ "$status" -eq 0 ]
 }
 
+@test "hook is silent when stop_hook_active is true (avoid block loop)" {
+  # Even with cooldown elapsed (no state file), if a prior Stop hook in this
+  # same turn already blocked, we must not block again.
+  result="$(run_hook_in_with_stdin "$PROJ" '{"stop_hook_active": true}')"
+  [ -z "$result" ]
+}
+
 @test "hook fires when config gid differs from state gid (URL was repointed)" {
   # State file says we last updated task gid 2 (from the configured URL),
   # but cooldown has NOT elapsed. If user changes the URL to point at a
@@ -100,5 +113,6 @@ cooldown_minutes = 30
 asana_task_url = "https://app.asana.com/0/1/999"
 EOF
   result="$(run_hook_in "$PROJ")"
-  echo "$result" | jq -e '.hookSpecificOutput.additionalContext | test("asana:update")' >/dev/null
+  echo "$result" | jq -e '.decision == "block"' >/dev/null
+  echo "$result" | jq -e '.reason | test("asana:update")' >/dev/null
 }

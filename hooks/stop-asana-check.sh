@@ -8,8 +8,13 @@
 
 set -euo pipefail
 
-# Read Claude's stdin event JSON but ignore it; we don't depend on its content.
-cat >/dev/null 2>&1 || true
+# Read Claude's stdin event JSON. We only care about stop_hook_active:
+# if a previous Stop hook in this same turn already blocked, exit silently
+# to avoid an infinite block loop when the skill fails or the user declines.
+event="$(cat 2>/dev/null || echo '{}')"
+if printf '%s' "$event" | jq -e '.stop_hook_active == true' >/dev/null 2>&1; then
+  exit 0
+fi
 
 PLUGIN_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
@@ -55,10 +60,10 @@ if [ -f "$state_file" ]; then
   fi
 fi
 
-# Fire: emit hookSpecificOutput.additionalContext telling Claude to invoke the skill.
+# Fire: block the stop and feed Claude a reason telling it to invoke the skill.
+# Stop hooks don't support hookSpecificOutput.additionalContext — only
+# decision:"block" with a reason gets the text injected as context.
 jq -n --arg key "$key" '{
-  hookSpecificOutput: {
-    hookEventName: "Stop",
-    additionalContext: ("[asana-update] " + ($key | tostring) + " is due for an Asana update. Invoke the asana:update skill now to summarize recent work and post a story to the linked task.")
-  }
+  decision: "block",
+  reason: ("[asana-update] " + ($key | tostring) + " is due for an Asana update. Invoke the asana:update skill now to summarize recent work and post a story to the linked task.")
 }'
