@@ -1,7 +1,7 @@
 {
   "name": "asana",
   "displayName": "Asana",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Auto-post progress to a linked Asana task on a per-project cooldown.",
   "author": {
     "name": "Nick Otto"
