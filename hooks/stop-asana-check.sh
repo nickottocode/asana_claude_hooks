@@ -27,7 +27,7 @@ STATE_DIR="$CONFIG_HOME/asana-skill/state"
 key="$("$PLUGIN_DIR/hooks/resolve.sh" "$PWD" "$CONFIG" 2>/dev/null || true)"
 [ -z "$key" ] && exit 0
 
-cooldown_min="$(config_get_cooldown "$CONFIG" "$key" 2>/dev/null)" || cooldown_min=30
+cooldown_min="$(config_get_cooldown "$CONFIG" "$key" 2>/dev/null)" || cooldown_min=120
 configured_url="$(config_get_url "$CONFIG" "$key" 2>/dev/null)" || configured_url=""
 configured_gid="$(extract_task_gid "$configured_url" 2>/dev/null || true)"
 

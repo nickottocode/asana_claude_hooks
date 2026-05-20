@@ -41,7 +41,7 @@ PY
 
 config_get_cooldown() {
   local config="$1" key="$2"
-  if [ ! -f "$config" ]; then echo 30; return 0; fi
+  if [ ! -f "$config" ]; then echo 120; return 0; fi
   python3 - "$config" "$key" <<'PY'
 import sys, tomllib
 config_path, key = sys.argv[1], sys.argv[2]
@@ -51,7 +51,7 @@ try:
 except FileNotFoundError:
     cfg = {}
 entry = cfg.get(key, {})
-print(entry.get('cooldown_minutes', cfg.get('cooldown_minutes', 30)))
+print(entry.get('cooldown_minutes', cfg.get('cooldown_minutes', 120)))
 PY
 }
 

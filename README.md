@@ -53,7 +53,7 @@ In any working directory where you want Asana tracking:
 /asana:link https://app.asana.com/0/12345/67890
 ```
 
-Then just work normally. The first Asana post happens after your configured cooldown (default 30 min) once you have meaningful work to summarize.
+Then just work normally. The first Asana post happens after your configured cooldown (default 120 min) once you have meaningful work to summarize.
 
 Inspect or troubleshoot:
 
@@ -70,7 +70,7 @@ Edit `~/.config/asana-skill/config.toml`. Per-project overrides are optional:
 
 ```toml
 # Global defaults
-cooldown_minutes = 30
+cooldown_minutes = 120
 auto_post = true
 
 ["/home/me/work/widget-project"]
@@ -80,7 +80,7 @@ asana_task_url = "https://app.asana.com/0/12345/67890"
 # auto_post = false
 ```
 
-- `cooldown_minutes`: minimum minutes between Asana updates for that project. Default 30.
+- `cooldown_minutes`: minimum minutes between Asana updates for that project. Default 120.
 - `auto_post`: if false, the skill drafts the comment and waits for your approval instead of posting directly. Default true.
 
 ## Tests

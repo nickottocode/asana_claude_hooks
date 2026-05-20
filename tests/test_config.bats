@@ -45,10 +45,10 @@ teardown() { teardown_common; }
   [ "$result" = "30" ]
 }
 
-@test "config_get_cooldown uses hardcoded 30 when nothing is set" {
+@test "config_get_cooldown uses hardcoded 120 when nothing is set" {
   echo "" > "$CONFIG"
   result="$(config_get_cooldown "$CONFIG" "/anything")"
-  [ "$result" = "30" ]
+  [ "$result" = "120" ]
 }
 
 @test "config_get_auto_post uses per-project override when false" {
