@@ -51,9 +51,45 @@ Review the conversation since `$LAST` (or since session start if `$LAST` is empt
 - Tests added, bugs fixed
 - Blockers, open questions, things to revisit
 
-Draft a concise prose summary (3-8 sentences, no marketing language). Lead with what changed, then context if needed. Use plain English. **Do not include code blocks** — Asana renders them poorly. Reference files by relative path where helpful.
+Write the story using the skeleton below. The goal is a scannable status update, not a narrative. Omit any section that's genuinely empty — don't pad.
 
-If nothing meaningful has happened (e.g., session was idle chitchat), write a one-line "no substantive work since last update" story rather than padding.
+```
+**Progress:**
+- <concrete artifact, change, or decision>
+- <concrete artifact, change, or decision>
+
+**Next:**
+- <what's queued or in-flight>
+
+**Blockers:**
+- <anything stuck, open question, or decision needed>
+```
+
+Rules:
+
+- Describe artifacts and decisions, not the journey. Bullets should read like changelog entries.
+- Each bullet ≤ ~20 words. Aim for ≤ 4 bullets per section.
+- Plain English, no marketing language, no "I" narration ("I looked at…", "I decided to…").
+- **No code blocks** — Asana renders them poorly. Reference files by relative path inline.
+- If literally nothing substantive happened (idle chitchat, no edits, no decisions), post a single line: `No substantive work since last update.` Do not invent progress to fill the skeleton.
+
+#### Example
+
+**Avoid** (stream of consciousness):
+
+> Started by looking at the failing tests and tried a few things. Noticed the retry logic wasn't being hit so went back to client.py and added some logging. Eventually figured out the timeout was wrong, so changed it. Then ran the tests again and they passed. Also thought about whether to refactor the whole client but decided not to for now. Might revisit later.
+
+**Prefer** (skeleton):
+
+> **Progress:**
+> - Fixed retry path in `client.py` — timeout was set to 0 so retries never fired.
+> - Tests in `tests/test_client.py` now pass locally.
+>
+> **Next:**
+> - Sweep other call sites for the same timeout bug.
+>
+> **Blockers:**
+> - None — flagging the broader client refactor as deferred, not blocking.
 
 ### 4. Decide whether to update the description
 
