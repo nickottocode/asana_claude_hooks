@@ -44,7 +44,12 @@ if [ -f "$state_file" ]; then
   if [ -n "$configured_gid" ] && [ -n "$state_gid" ] && [ "$configured_gid" != "$state_gid" ]; then
     : # fall through to fire
   else
-    last_iso="$(state_read_last_update_at "$STATE_DIR" "$key" 2>/dev/null || true)"
+    # Gate on the most recent of: successful post (last_update_at) OR any prior
+    # skill run that didn't write a story (last_attempt_at). state_read_last_attempt_at
+    # falls back to last_update_at when the field is missing on older state files,
+    # and state_write keeps last_attempt_at >= last_update_at, so reading just the
+    # attempt timestamp is sufficient.
+    last_iso="$(state_read_last_attempt_at "$STATE_DIR" "$key" 2>/dev/null || true)"
     if [ -n "$last_iso" ]; then
       if last_epoch="$(parse_date "$last_iso" 2>/dev/null)"; then
         now_epoch="$(date +%s)"

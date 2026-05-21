@@ -40,6 +40,40 @@ teardown() { teardown_common; }
   jq -e '.task_gid == "67890"' "$path" >/dev/null
   jq -e '.last_update_at == "2026-05-19T14:32:11Z"' "$path" >/dev/null
   jq -e '.last_update_kind == "story"' "$path" >/dev/null
+  jq -e '.last_attempt_at == "2026-05-19T14:32:11Z"' "$path" >/dev/null
+}
+
+@test "state_write_attempt creates a file with only last_attempt_at when none exists" {
+  state_write_attempt "$STATE_DIR" "/home/alice/proj-a" "2026-05-19T15:00:00Z"
+  path="$(state_path_for "$STATE_DIR" "/home/alice/proj-a")"
+  [ -f "$path" ]
+  jq -e '.last_attempt_at == "2026-05-19T15:00:00Z"' "$path" >/dev/null
+  jq -e '.last_update_at // null == null' "$path" >/dev/null
+}
+
+@test "state_write_attempt preserves other fields on an existing file" {
+  state_write "$STATE_DIR" "/home/alice/proj-a" "67890" "2026-05-19T14:32:11Z" "story"
+  state_write_attempt "$STATE_DIR" "/home/alice/proj-a" "2026-05-19T16:00:00Z"
+  path="$(state_path_for "$STATE_DIR" "/home/alice/proj-a")"
+  jq -e '.task_gid == "67890"' "$path" >/dev/null
+  jq -e '.last_update_at == "2026-05-19T14:32:11Z"' "$path" >/dev/null
+  jq -e '.last_update_kind == "story"' "$path" >/dev/null
+  jq -e '.last_attempt_at == "2026-05-19T16:00:00Z"' "$path" >/dev/null
+}
+
+@test "state_read_last_attempt_at falls back to last_update_at when missing" {
+  path="$(state_path_for "$STATE_DIR" "/home/alice/proj-a")"
+  mkdir -p "$STATE_DIR"
+  jq -n '{registered_path: "/home/alice/proj-a", task_gid: "67890", last_update_at: "2026-05-19T14:32:11Z", last_update_kind: "story"}' > "$path"
+  result="$(state_read_last_attempt_at "$STATE_DIR" "/home/alice/proj-a")"
+  [ "$result" = "2026-05-19T14:32:11Z" ]
+}
+
+@test "state_read_last_attempt_at returns last_attempt_at when present" {
+  state_write "$STATE_DIR" "/home/alice/proj-a" "67890" "2026-05-19T14:32:11Z" "story"
+  state_write_attempt "$STATE_DIR" "/home/alice/proj-a" "2026-05-19T16:00:00Z"
+  result="$(state_read_last_attempt_at "$STATE_DIR" "/home/alice/proj-a")"
+  [ "$result" = "2026-05-19T16:00:00Z" ]
 }
 
 @test "state_read_last_update_at returns the stored timestamp" {

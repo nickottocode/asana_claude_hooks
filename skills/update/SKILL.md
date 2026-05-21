@@ -146,19 +146,30 @@ AUTO="$(config_get_auto_post "$CONFIG" "$KEY")"
 - Ask: "Should I post this to Asana? (yes/edit/skip)"
 - If yes: proceed with the MCP calls above.
 - If edit: invite the user to provide corrections, then re-confirm.
-- If skip: do nothing further (and do NOT update state — the cooldown will re-elapse).
+- If skip: do not post. Go to step 7 and record an attempt (so the cooldown re-elapses).
 
-### 7. Update state on success
-
-If the MCP calls succeeded, write the new state file:
+### 7. Update state
 
 ```bash
 NOW="$(date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || gdate -u +%Y-%m-%dT%H:%M:%SZ)"
+```
+
+**On success (the post landed):**
+
+```bash
 KIND="story"  # or "story+description" if you also updated notes
 state_write "$STATE_DIR" "$KEY" "$GID" "$NOW" "$KIND"
 ```
 
-**Important:** do NOT update state on failure. Leaving the old timestamp ensures the cooldown re-elapses naturally and the next Stop event retries.
+This writes both `last_update_at` and `last_attempt_at`.
+
+**On any non-success outcome** — MCP error, user rejected the tool call, user said "skip" in `auto_post=false` mode, task deleted, etc.:
+
+```bash
+state_write_attempt "$STATE_DIR" "$KEY" "$NOW"
+```
+
+This writes ONLY `last_attempt_at`, preserving `last_update_at` so the prior successful post remains the authoritative anchor. The Stop hook gates on `last_attempt_at`, so the cooldown re-elapses naturally and you won't be re-asked next turn.
 
 ### 8. Tell the user (one short line)
 
@@ -172,8 +183,9 @@ If you also updated the description, say:
 
 | Failure | Behavior |
 |---|---|
-| Asana MCP not available / not authed | Print one-line warning. Do NOT update state. |
-| `asana_create_task_story` returns an error | Print the error. Do NOT update state. |
-| URL points to a deleted task | Same as above. User can /asana-unlink and /asana-link with a fresh URL. |
+| Asana MCP not available / not authed | Print one-line warning. Call `state_write_attempt` so the cooldown re-elapses. |
+| `asana_create_task_story` returns an error | Print the error. Call `state_write_attempt`. |
+| User rejected the tool call (permission prompt) | Acknowledge briefly. Call `state_write_attempt`. |
+| URL points to a deleted task | Print the error. Call `state_write_attempt`. User can /asana-unlink and /asana-link with a fresh URL. |
 
-In all failure cases: do NOT update the state file. The cooldown will naturally retry next turn after the cooldown elapses.
+In all non-success cases: do NOT call `state_write` (that would falsely claim a post landed). DO call `state_write_attempt` so the Stop hook respects the cooldown after the failed attempt rather than re-asking on every subsequent user turn.

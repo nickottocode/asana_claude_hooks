@@ -97,6 +97,19 @@ EOF
   [ -z "$result" ]
 }
 
+@test "hook is silent when last_attempt_at is recent but last_update_at is stale" {
+  # Models a failed/rejected post: state was written via state_write_attempt
+  # because the prior asana:update skill run did not succeed. The Stop hook
+  # must respect last_attempt_at so the user isn't re-pestered every turn.
+  . "$PLUGIN_DIR/lib/compat.sh"
+  . "$PLUGIN_DIR/lib/state.sh"
+  state_write "$STATE_DIR" "$PROJ" "2" "2020-01-01T00:00:00Z" "story"
+  now_iso="$(date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || gdate -u +%Y-%m-%dT%H:%M:%SZ)"
+  state_write_attempt "$STATE_DIR" "$PROJ" "$now_iso"
+  result="$(run_hook_in "$PROJ")"
+  [ -z "$result" ]
+}
+
 @test "hook fires when config gid differs from state gid (URL was repointed)" {
   # State file says we last updated task gid 2 (from the configured URL),
   # but cooldown has NOT elapsed. If user changes the URL to point at a
