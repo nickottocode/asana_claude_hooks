@@ -71,7 +71,7 @@ Rules:
 - Each bullet ≤ ~20 words. Aim for ≤ 4 bullets per section.
 - Plain English, no marketing language, no "I" narration ("I looked at…", "I decided to…").
 - **No code blocks** — Asana renders them poorly. Reference files by relative path inline.
-- If literally nothing substantive happened (idle chitchat, no edits, no decisions), post a single line: `No substantive work since last update.` Do not invent progress to fill the skeleton.
+- If literally nothing substantive happened (idle chitchat, no edits, no decisions), do NOT post anything. Skip steps 4–6 entirely, go to step 7, and record an attempt (so the cooldown re-elapses). Do not invent progress to fill the skeleton, and do not post a placeholder like "no update" — silence is the correct output.
 
 #### Example
 
@@ -135,6 +135,8 @@ AUTO="$(config_get_auto_post "$CONFIG" "$KEY")"
 
 ### 6. Post (or draft) the update
 
+If step 3 determined there was no substantive work, skip this step entirely and go to step 7.
+
 **If `auto_post = true`:**
 
 - Post the story by calling `mcp__asana__asana_create_task_story` with `task_id = $GID` and `text = <your drafted story>`.
@@ -163,7 +165,7 @@ state_write "$STATE_DIR" "$KEY" "$GID" "$NOW" "$KIND"
 
 This writes both `last_update_at` and `last_attempt_at`.
 
-**On any non-success outcome** — MCP error, user rejected the tool call, user said "skip" in `auto_post=false` mode, task deleted, etc.:
+**On any non-success outcome** — nothing substantive to report (step 3 skip), MCP error, user rejected the tool call, user said "skip" in `auto_post=false` mode, task deleted, etc.:
 
 ```bash
 state_write_attempt "$STATE_DIR" "$KEY" "$NOW"
@@ -179,10 +181,14 @@ After successful posting, print one line to the user, e.g.:
 If you also updated the description, say:
 `Posted progress story and refreshed description on Asana task 67890.`
 
+If you skipped posting because there was nothing substantive to report (step 3 skip), print one line, e.g.:
+`No substantive work since last update — skipped Asana post; cooldown re-elapses.`
+
 ## Failure handling
 
 | Failure | Behavior |
 |---|---|
+| Nothing substantive to report | Print one-line note. Call `state_write_attempt` so the cooldown re-elapses. Do NOT post anything to Asana. |
 | Asana MCP not available / not authed | Print one-line warning. Call `state_write_attempt` so the cooldown re-elapses. |
 | `asana_create_task_story` returns an error | Print the error. Call `state_write_attempt`. |
 | User rejected the tool call (permission prompt) | Acknowledge briefly. Call `state_write_attempt`. |
